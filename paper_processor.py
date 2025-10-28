@@ -1,0 +1,138 @@
+"""Paper processor using Claude Agent SDK."""
+
+import os
+import shutil
+import asyncio
+from pathlib import Path
+from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
+from config import CLAUDE_ALLOWED_TOOLS, CLAUDE_PERMISSION_MODE, TEMPLATES_DIR
+
+
+class PaperProcessor:
+    """Process parsed papers using Claude Agent SDK."""
+    
+    def __init__(self):
+        self.templates_dir = TEMPLATES_DIR
+    
+    async def generate_summaries(
+        self,
+        full_md_path: str,
+        images_dir: str,
+        output_dir: str
+    ) -> tuple[str, str]:
+        """
+        Generate executive summary and detailed breakdown using Claude.
+        
+        Args:
+            full_md_path: Path to the full.md file from MinerU
+            images_dir: Path to the images directory from MinerU
+            output_dir: Output directory for generated files
+            
+        Returns:
+            Tuple of (executive_summary_path, detailed_breakdown_path)
+        """
+        # Create output directory and images subdirectory
+        os.makedirs(output_dir, exist_ok=True)
+        output_images_dir = os.path.join(output_dir, "images")
+        os.makedirs(output_images_dir, exist_ok=True)
+        
+        # Copy images to output directory
+        if os.path.exists(images_dir):
+            print("Copying images to output directory...")
+            for img_file in os.listdir(images_dir):
+                src = os.path.join(images_dir, img_file)
+                dst = os.path.join(output_images_dir, img_file)
+                if os.path.isfile(src):
+                    shutil.copy2(src, dst)
+            print(f"Copied {len(os.listdir(output_images_dir))} images")
+        
+        # Prepare paths
+        exec_summary_path = os.path.join(output_dir, "executive_summary.md")
+        detailed_breakdown_path = os.path.join(output_dir, "detailed_breakdown.md")
+        exec_template_path = os.path.join(self.templates_dir, "executive_summary.md")
+        detailed_template_path = os.path.join(self.templates_dir, "detailed_breakdown.md")
+        
+        # Build the prompt for Claude
+        prompt = self._build_prompt(
+            full_md_path,
+            exec_template_path,
+            detailed_template_path,
+            exec_summary_path,
+            detailed_breakdown_path
+        )
+        
+        print("\nStarting Claude Agent to generate summaries...")
+        print("This may take a few minutes...\n")
+        
+        # Configure Claude SDK
+        options = ClaudeAgentOptions(
+            allowed_tools=CLAUDE_ALLOWED_TOOLS,
+            permission_mode=CLAUDE_PERMISSION_MODE,
+            cwd=output_dir
+        )
+        
+        # Use Claude SDK to generate summaries
+        async with ClaudeSDKClient(options=options) as client:
+            await client.query(prompt)
+            
+            # Receive and process messages
+            async for message in client.receive_response():
+                # Just consume messages; Claude will write the files
+                pass
+        
+        print("\nClaude Agent finished processing.")
+        
+        # Verify files were created
+        if not os.path.exists(exec_summary_path):
+            raise Exception("Executive summary was not created")
+        if not os.path.exists(detailed_breakdown_path):
+            raise Exception("Detailed breakdown was not created")
+        
+        return exec_summary_path, detailed_breakdown_path
+    
+    def _build_prompt(
+        self,
+        full_md_path: str,
+        exec_template_path: str,
+        detailed_template_path: str,
+        exec_output_path: str,
+        detailed_output_path: str
+    ) -> str:
+        """Build the prompt for Claude Agent."""
+        
+        prompt = f"""You are a technical paper analyzer tasked with creating two comprehensive summaries of a research paper.
+
+**Available Files:**
+- Paper content: `{full_md_path}`
+- Executive summary template: `{exec_template_path}`
+- Detailed breakdown template: `{detailed_template_path}`
+- Images directory: `./images/` (contains figures from the paper)
+
+**Your Task:**
+1. Read the paper content from {full_md_path} carefully and thoroughly
+2. Read both template files to understand the required structure
+3. Generate two markdown files following the templates exactly:
+   - `{exec_output_path}`: A concise, engaging summary for non-technical readers
+   - `{detailed_output_path}`: A comprehensive technical breakdown
+
+**Guidelines:**
+- Follow the template structure precisely - keep all section headers and formatting
+- Replace the placeholder text in brackets [...] with actual content from the paper
+- Include relevant images using relative paths: `![caption](./images/filename.jpg)`
+- Use Glob or list the images directory to see available images and reference them appropriately
+- Include specific metrics, numbers, and results from the paper
+- For the executive summary: Make it accessible and engaging for a general audience
+- For the detailed breakdown: Provide technical depth while remaining clear
+- Ensure all factual information comes from the paper content
+
+**Process:**
+1. First, use Read to examine the paper content and templates
+2. Use Glob to see what images are available
+3. Write the executive_summary.md file
+4. Write the detailed_breakdown.md file
+5. Verify both files are complete and properly formatted
+
+Begin by reading the paper and templates, then generate both summary files."""
+
+        return prompt
+
