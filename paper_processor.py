@@ -16,17 +16,19 @@ class PaperProcessor:
     
     async def generate_summaries(
         self,
-        full_md_path: str,
+        markdown_path: str,
         images_dir: str,
-        output_dir: str
+        output_dir: str,
+        parser: str = "mineru"
     ) -> tuple[str, str]:
         """
         Generate executive summary and detailed breakdown using Claude.
         
         Args:
-            full_md_path: Path to the full.md file from MinerU
-            images_dir: Path to the images directory from MinerU
+            markdown_path: Path to the markdown file (full.md for MinerU, res.md for Zai)
+            images_dir: Path to the images directory (images/ for MinerU, imgs/ for Zai)
             output_dir: Output directory for generated files
+            parser: Parser type ('mineru' or 'zai')
             
         Returns:
             Tuple of (executive_summary_path, detailed_breakdown_path)
@@ -45,6 +47,8 @@ class PaperProcessor:
                 if os.path.isfile(src):
                     shutil.copy2(src, dst)
             print(f"Copied {len(os.listdir(output_images_dir))} images")
+        else:
+            print(f"Warning: Images directory not found at {images_dir}")
         
         # Prepare paths
         exec_summary_path = os.path.join(output_dir, "executive_summary.md")
@@ -54,11 +58,12 @@ class PaperProcessor:
         
         # Build the prompt for Claude
         prompt = self._build_prompt(
-            full_md_path,
+            markdown_path,
             exec_template_path,
             detailed_template_path,
             exec_summary_path,
-            detailed_breakdown_path
+            detailed_breakdown_path,
+            parser
         )
         
         print("\nStarting Claude Agent to generate summaries...")
@@ -92,24 +97,29 @@ class PaperProcessor:
     
     def _build_prompt(
         self,
-        full_md_path: str,
+        markdown_path: str,
         exec_template_path: str,
         detailed_template_path: str,
         exec_output_path: str,
-        detailed_output_path: str
+        detailed_output_path: str,
+        parser: str
     ) -> str:
         """Build the prompt for Claude Agent."""
+        
+        # Get the markdown filename for display
+        md_filename = os.path.basename(markdown_path)
+        parser_name = "MinerU" if parser == "mineru" else "Zai"
         
         prompt = f"""You are a technical paper analyzer tasked with creating two comprehensive summaries of a research paper.
 
 **Available Files:**
-- Paper content: `{full_md_path}`
+- Paper content: `{markdown_path}` (parsed by {parser_name})
 - Executive summary template: `{exec_template_path}`
 - Detailed breakdown template: `{detailed_template_path}`
 - Images directory: `./images/` (contains figures from the paper)
 
 **Your Task:**
-1. Read the paper content from {full_md_path} carefully and thoroughly
+1. Read the paper content from {markdown_path} carefully and thoroughly
 2. Read both template files to understand the required structure
 3. Generate two markdown files following the templates exactly:
    - `{exec_output_path}`: A concise, engaging summary for non-technical readers

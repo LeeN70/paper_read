@@ -8,15 +8,26 @@ MINERU_BASE_URL = "https://mineru.net/api/v4"
 MINERU_SUBMIT_URL = f"{MINERU_BASE_URL}/extract/task"
 MINERU_QUERY_URL_TEMPLATE = f"{MINERU_BASE_URL}/extract/task/{{}}"
 
+# Zai API Configuration
+ZAI_BASE_URL = "http://10.243.65.197:12004"
+
 # Polling Configuration
 POLL_INTERVAL_SECONDS = 10
 TIMEOUT_SECONDS = 1800  # 30 minutes
 
 # Directories
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
 TEMPLATES_DIR = os.path.join(PROJECT_ROOT, "templates")
+
+# Legacy directories (for backward compatibility)
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
 CACHE_DIR = os.path.join(PROJECT_ROOT, "cache")
+
+# Parser-specific directories
+CACHE_MINERU_DIR = os.path.join(PROJECT_ROOT, "cache_mineru")
+CACHE_ZAI_DIR = os.path.join(PROJECT_ROOT, "cache_zai")
+OUTPUT_MINERU_DIR = os.path.join(PROJECT_ROOT, "output_mineru")
+OUTPUT_ZAI_DIR = os.path.join(PROJECT_ROOT, "output_zai")
 
 # Claude SDK Configuration
 CLAUDE_ALLOWED_TOOLS = ["Read", "Write", "Edit", "Grep", "Glob"]

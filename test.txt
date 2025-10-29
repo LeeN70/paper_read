@@ -1,7 +1,30 @@
-python main.py https://arxiv.org/pdf/1706.03762.pdf
+export ANTHROPIC_AUTH_TOKEN=
+export ANTHROPIC_BASE_URL=
 
-python main.py https://arxiv.org/pdf/2502.09992.pdf
-python main.py https://arxiv.org/pdf/2502.17480.pdf
-python main.py https://arxiv.org/pdf/2502.05957.pdf
-python main.py https://arxiv.org/pdf/2502.12115.pdf
-python main.py https://arxiv.org/pdf/2502.11190.pdf
+python main.py 
+--parser mineru
+--parser zai
+
+attention is all you need ×
+https://arxiv.org/pdf/1706.03762.pdf
+bert √
+https://arxiv.org/pdf/1706.03762.pdf
+instruct gpt √
+https://arxiv.org/pdf/2203.02155.pdf
+
+grpo √
+https://arxiv.org/pdf/2402.03300.pdf
+dapo ×
+https://arxiv.org/pdf/2503.14476.pdf
+gspo √
+https://arxiv.org/pdf/2507.18071.pdf
+
+deepseek r1 √
+https://arxiv.org/pdf/2501.12948.pdf
+kimi k2 √
+https://arxiv.org/pdf/2507.20534.pdf
+glm 4.5 √
+https://arxiv.org/pdf/2508.06471.pdf
+
+ReAct √
+https://arxiv.org/pdf/2210.03629.pdf
