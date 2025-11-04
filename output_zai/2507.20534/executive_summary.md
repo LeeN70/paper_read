@@ -4,22 +4,23 @@
 
 ### The Problem
 
-Large language models face fundamental limitations in achieving true agentic intelligence - the ability to autonomously perceive, plan, reason, and act in complex environments. Current models struggle with training instability, inefficient token usage, and difficulty scaling agentic capabilities like multi-step reasoning and tool use beyond their training data.
+Large language models face fundamental limitations in scaling agentic intelligence - the ability to autonomously perceive, plan, reason, and act in dynamic environments. Training instability limits model size, while the scarcity of high-quality agentic training data restricts the development of practical tool-use capabilities that can solve real-world, multi-step problems.
 
 ### The Breakthrough
 
-Kimi K2 introduces a revolutionary **MuonClip optimizer** that eliminates training instability while preserving the token efficiency advantages of the Muon algorithm. Combined with a large-scale agentic data synthesis pipeline and joint reinforcement learning framework, this enables stable training of a 1 trillion parameter model that achieves state-of-the-art performance in agentic tasks without requiring extended thinking time.
+Kimi K2 introduces **MuonClip**, a novel optimizer that combines the token-efficient Muon algorithm with a stability-enhancing QK-Clip mechanism, enabling stable training of trillion-parameter models. The breakthrough lies in solving the core challenge of attention logit explosion that typically limits large-scale model training, while maintaining superior token efficiency through innovative data rephrasing techniques.
 
 ### How It Works
 
-The core innovation addresses attention mechanism instability through **QK-Clip**, which constrains attention logits by rescaling query and key projection weights when they exceed threshold values. This prevents the exploding attention logits that typically cause training failures in large-scale models. The system also generates synthetic agentic trajectories at scale through simulated environments, then refines capabilities through reinforcement learning with both verifiable rewards and self-critique mechanisms. This approach achieved **zero loss spikes** during pre-training on 15.5 trillion tokens.
+MuonClip uses per-head weight clipping to control attention dynamics, allowing stable training of a 1-trillion parameter Mixture-of-Experts model with 32 billion activated parameters. The system incorporates large-scale synthetic agentic data generation and unified reinforcement learning with both verifiable rewards and self-critique mechanisms. This approach achieves **65.8% on SWE-bench Verified** - closing the gap with closed-source models like Claude 4 Opus.
 
 ### Why This Matters
 
-Kimi K2 represents a significant leap toward practical AI agents that can operate autonomously in real-world scenarios. Its exceptional performance on software engineering tasks (65.8% on SWE-Bench Verified) and competitive coding (53.7% on LiveCodeBench) demonstrates unprecedented capabilities for AI systems that can write, debug, and deploy software automatically. The model's strength in mathematics (49.5% on AIME 2025) and reasoning (75.1% on GPQA-Diamond) shows broad applicability beyond coding.
+This represents a major advance for democratizing AI capabilities, providing the open-source community with a model that excels at practical software engineering and agentic tasks. The model's strong performance across coding (53.7% on LiveCodeBench v6), mathematics (49.5% on AIME 2025), and tool use (66.1 on Tau2-Bench) demonstrates its versatility for real-world applications.
 
 ### The Business Opportunity
 
-This technology enables the development of autonomous AI agents for software development, scientific research, and complex problem-solving at scale. With open-source release of both base and post-trained models, Kimi K2 democratizes access to cutting-edge agentic intelligence, allowing companies to build specialized AI agents that can operate independently across diverse domains from customer service to research automation.
+Kimi K2 creates new possibilities for building sophisticated AI agents that can handle complex software development workflows, automate technical tasks, and operate across diverse digital environments - all with an open-source model that rivals proprietary alternatives in performance.
 
-![Main results showing Kimi K2 performance across benchmarks](./images/59c6fa3876c5b81ce8c759ac85a13d1b.jpg)
+![Kimi K2 main results showing performance across benchmarks](./images/59c6fa3876c5b81ce8c759ac85a13d1b.jpg)
+

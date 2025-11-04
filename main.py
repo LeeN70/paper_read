@@ -51,6 +51,29 @@ def validate_arxiv_url(url: str) -> bool:
     return True
 
 
+def check_cache_exists(cache_dir: str, parser: str) -> tuple[bool, str, str]:
+    """
+    Check if parsed content already exists in cache.
+    
+    Args:
+        cache_dir: Path to the cache directory for the paper
+        parser: Parser type ('mineru' or 'zai')
+    
+    Returns:
+        Tuple of (cache_exists, markdown_path, images_dir)
+    """
+    if parser == "mineru":
+        md_path = os.path.join(cache_dir, "full.md")
+        imgs_dir = os.path.join(cache_dir, "images")
+    else:  # zai
+        md_path = os.path.join(cache_dir, "res.md")
+        imgs_dir = os.path.join(cache_dir, "imgs")
+    
+    if os.path.exists(md_path):
+        return True, md_path, imgs_dir
+    return False, "", ""
+
+
 async def process_paper(arxiv_url: str, parser: str = "mineru"):
     """
     Main processing pipeline for a paper.
@@ -88,52 +111,65 @@ async def process_paper(arxiv_url: str, parser: str = "mineru"):
     # Initialize paper processor
     paper_processor = PaperProcessor()
     
-    # Parse document based on selected parser
-    if parser == "mineru":
-        # MinerU workflow
-        mineru_client = MinerUClient()
-        
-        # Step 1: Submit to MinerU
-        print("Step 1: Submitting to MinerU for PDF parsing")
-        print("-" * 70)
-        task_id = mineru_client.submit_task(arxiv_url)
-        print()
-        
-        # Step 2: Poll for completion
-        print("Step 2: Waiting for MinerU to complete parsing")
-        print("-" * 70)
-        zip_url = mineru_client.poll_task_status(task_id)
-        print()
-        
-        # Step 3: Download and extract
-        print("Step 3: Downloading and extracting parsed content")
-        print("-" * 70)
-        markdown_path, images_dir = mineru_client.download_and_extract_zip(zip_url, paper_cache_dir)
-        print()
-        
-    else:  # zai
-        # Zai workflow
-        zai_client = ZaiClient()
-        
-        # Step 1: Download PDF from arXiv
-        print("Step 1: Downloading PDF from arXiv")
-        print("-" * 70)
-        pdf_filename = f"{paper_id}.pdf"
-        pdf_path = os.path.join(paper_cache_dir, pdf_filename)
-        download_pdf(arxiv_url, pdf_path)
-        print()
-        
-        # Steps 2-6: Zai parsing workflow (preupload -> upload -> parse -> poll -> download -> extract)
-        print("Step 2: Running Zai parsing workflow")
-        print("-" * 70)
-        markdown_path, images_dir = zai_client.parse_document(pdf_path, paper_cache_dir)
-        print()
+    # Check if cache already exists
+    cache_exists, markdown_path, images_dir = check_cache_exists(paper_cache_dir, parser)
     
-    # Step 4: Generate summaries with Claude
-    print(f"Step {'4' if parser == 'mineru' else '3'}: Generating summaries with Claude Agent SDK")
+    if cache_exists:
+        print("=" * 70)
+        print("CACHE FOUND - Skipping parsing")
+        print("=" * 70)
+        print()
+        print("Found cached parsing results, skipping parsing workflow...")
+        print(f"  - Markdown: {markdown_path}")
+        print(f"  - Images: {images_dir}")
+        print()
+    else:
+        # Parse document based on selected parser
+        if parser == "mineru":
+            # MinerU workflow
+            mineru_client = MinerUClient()
+            
+            # Step 1: Submit to MinerU
+            print("Step 1: Submitting to MinerU for PDF parsing")
+            print("-" * 70)
+            task_id = mineru_client.submit_task(arxiv_url)
+            print()
+            
+            # Step 2: Poll for completion
+            print("Step 2: Waiting for MinerU to complete parsing")
+            print("-" * 70)
+            zip_url = mineru_client.poll_task_status(task_id)
+            print()
+            
+            # Step 3: Download and extract
+            print("Step 3: Downloading and extracting parsed content")
+            print("-" * 70)
+            markdown_path, images_dir = mineru_client.download_and_extract_zip(zip_url, paper_cache_dir)
+            print()
+            
+        else:  # zai
+            # Zai workflow
+            zai_client = ZaiClient()
+            
+            # Step 1: Download PDF from arXiv
+            print("Step 1: Downloading PDF from arXiv")
+            print("-" * 70)
+            pdf_filename = f"{paper_id}.pdf"
+            pdf_path = os.path.join(paper_cache_dir, pdf_filename)
+            download_pdf(arxiv_url, pdf_path)
+            print()
+            
+            # Steps 2-6: Zai parsing workflow (preupload -> upload -> parse -> poll -> download -> extract)
+            print("Step 2: Running Zai parsing workflow")
+            print("-" * 70)
+            markdown_path, images_dir = zai_client.parse_document(pdf_path, paper_cache_dir)
+            print()
+    
+    # Step 4: Generate summaries and code analysis with Claude
+    print(f"Step {'4' if parser == 'mineru' else '3'}: Generating summaries and code analysis with Claude Agent SDK")
     print("-" * 70)
     output_paper_dir = os.path.join(output_dir, paper_id)
-    exec_summary, detailed_breakdown = await paper_processor.generate_summaries(
+    exec_summary, detailed_breakdown, relevant_code = await paper_processor.generate_summaries(
         markdown_path,
         images_dir,
         output_paper_dir,
@@ -146,12 +182,14 @@ async def process_paper(arxiv_url: str, parser: str = "mineru"):
     print("SUCCESS!")
     print("=" * 70)
     print()
-    print(f"Paper summaries generated successfully!")
+    print(f"Paper summaries and code analysis generated successfully!")
     print()
     print(f"Output directory: {output_paper_dir}")
     print(f"  - Executive Summary: {exec_summary}")
     print(f"  - Detailed Breakdown: {detailed_breakdown}")
+    print(f"  - Relevant Code: {relevant_code}")
     print(f"  - Images: {os.path.join(output_paper_dir, 'images')}")
+    print(f"  - Code Repository: {os.path.join(output_paper_dir, 'code_repo')}")
     print()
     print(f"Cached {parser.upper()} parsed content: {paper_cache_dir}")
     print()

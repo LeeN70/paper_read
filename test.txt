@@ -5,26 +5,27 @@ python main.py
 --parser mineru
 --parser zai
 
-attention is all you need ×
+attention is all you need 
 https://arxiv.org/pdf/1706.03762.pdf
-bert √
-https://arxiv.org/pdf/1706.03762.pdf
-instruct gpt √
+bert 
+https://arxiv.org/pdf/1810.04805.pdf
+instruct gpt 
 https://arxiv.org/pdf/2203.02155.pdf
 
 grpo √
 https://arxiv.org/pdf/2402.03300.pdf
-dapo ×
+dapo √
 https://arxiv.org/pdf/2503.14476.pdf
 gspo √
 https://arxiv.org/pdf/2507.18071.pdf
 
-deepseek r1 √
+deepseek r1 
 https://arxiv.org/pdf/2501.12948.pdf
-kimi k2 √
+kimi k2 
 https://arxiv.org/pdf/2507.20534.pdf
-glm 4.5 √
+glm 4.5 
 https://arxiv.org/pdf/2508.06471.pdf
 
-ReAct √
+ReAct 
 https://arxiv.org/pdf/2210.03629.pdf
+

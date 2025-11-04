@@ -30,6 +30,6 @@ OUTPUT_MINERU_DIR = os.path.join(PROJECT_ROOT, "output_mineru")
 OUTPUT_ZAI_DIR = os.path.join(PROJECT_ROOT, "output_zai")
 
 # Claude SDK Configuration
-CLAUDE_ALLOWED_TOOLS = ["Read", "Write", "Edit", "Grep", "Glob"]
+CLAUDE_ALLOWED_TOOLS = ["Read", "Write", "Edit", "Grep", "Glob", "WebSearch", "Bash"]
 CLAUDE_PERMISSION_MODE = "acceptEdits"
 

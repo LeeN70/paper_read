@@ -53,7 +53,7 @@ GLM-4.5 demonstrates exceptional performance across comprehensive evaluation ben
 - **Coding Mastery**: Achieved **64.2% on SWE-bench Verified** and **37.5% on Terminal-Bench**, outperforming GPT-4.1 and Gemini-2.5-pro
 - **Parameter Efficiency**: With only half the parameters of DeepSeek-R1 and one-third of Kimi K2, GLM-4.5 ranks 3rd overall among all evaluated models and 2nd specifically on agentic benchmarks
 
-![4dea1da644c383228be3850d39432f61.jpg)
+![4dea1da644c383228be3850d39432f61](./images/4dea1da644c383228be3850d39432f61.jpg)
 
 The model also demonstrated strong performance in human evaluations, scoring 8.66 on English prompts, 8.37 on Chinese prompts, and 8.49 on other language prompts, outperforming DeepSeek-R1-0528 and Kimi K2 across all categories. In coding agent evaluations, GLM-4.5 achieved a **90.6% tool calling success rate**, the highest among all tested models including Claude Sonnet 4.
 

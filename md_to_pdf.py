@@ -1,168 +1,157 @@
 #!/usr/bin/env python3
 """
-Markdown to PDF Converter
-Converts detailed_breakdown.md and executive_summary.md files to PDF format
-with embedded images and professional styling.
+Markdown to PDF Converter for Paper Reader Output
+
+This script converts markdown files (detailed_breakdown.md, executive_summary.md, 
+relevant_code.md) in output_zai directory to PDF format, preserving images.
 """
 
 import os
-import sys
 import re
+import sys
 from pathlib import Path
 from typing import List, Tuple
-import logging
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 try:
-    import pypandoc
-except ImportError:
-    logger.error("pypandoc is not installed. Please install it: pip install pypandoc")
-    logger.error("Also ensure pandoc is installed on your system.")
+    import markdown
+    from markdown.extensions import codehilite, tables, fenced_code
+    from weasyprint import HTML, CSS
+except ImportError as e:
+    print("ERROR: Required packages not installed.")
+    print("Please install: pip install markdown weasyprint pygments")
     sys.exit(1)
 
 
-# Professional CSS styling for PDFs
+# CSS styles for PDF output
 PDF_CSS = """
-<style>
+@page {
+    size: A4;
+    margin: 2cm 1.5cm;
+}
+
 body {
-    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-family: 'DejaVu Sans', 'Arial', sans-serif;
+    font-size: 11pt;
     line-height: 1.6;
     color: #333;
-    max-width: 210mm;
-    margin: 0 auto;
-    padding: 20mm;
-    font-size: 11pt;
+    max-width: 100%;
 }
 
 h1 {
+    font-size: 24pt;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
     color: #2c3e50;
-    font-size: 28pt;
-    font-weight: 700;
-    margin-top: 0;
-    margin-bottom: 20pt;
-    padding-bottom: 10pt;
-    border-bottom: 3px solid #3498db;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 0.3em;
 }
 
 h2 {
+    font-size: 18pt;
+    margin-top: 1.2em;
+    margin-bottom: 0.5em;
     color: #34495e;
-    font-size: 20pt;
-    font-weight: 600;
-    margin-top: 24pt;
-    margin-bottom: 12pt;
-    padding-bottom: 6pt;
-    border-bottom: 2px solid #95a5a6;
 }
 
 h3 {
-    color: #2c3e50;
-    font-size: 16pt;
-    font-weight: 600;
-    margin-top: 18pt;
-    margin-bottom: 10pt;
+    font-size: 14pt;
+    margin-top: 1em;
+    margin-bottom: 0.4em;
+    color: #555;
 }
 
 h4 {
-    color: #34495e;
-    font-size: 14pt;
-    font-weight: 600;
-    margin-top: 14pt;
-    margin-bottom: 8pt;
+    font-size: 12pt;
+    margin-top: 0.8em;
+    margin-bottom: 0.3em;
+    color: #666;
 }
 
 p {
-    margin-bottom: 12pt;
+    margin: 0.8em 0;
     text-align: justify;
-}
-
-ul, ol {
-    margin-bottom: 12pt;
-    padding-left: 25pt;
-}
-
-li {
-    margin-bottom: 6pt;
-}
-
-code {
-    background-color: #f5f5f5;
-    padding: 2pt 4pt;
-    border-radius: 3pt;
-    font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 10pt;
-    color: #c7254e;
-}
-
-pre {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4pt;
-    padding: 12pt;
-    overflow-x: auto;
-    margin-bottom: 16pt;
-}
-
-pre code {
-    background-color: transparent;
-    padding: 0;
-    color: #333;
 }
 
 img {
     max-width: 100%;
     height: auto;
     display: block;
-    margin: 16pt auto;
+    margin: 1em auto;
     border: 1px solid #ddd;
-    border-radius: 4pt;
-    padding: 4pt;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+code {
+    font-family: 'DejaVu Sans Mono', 'Courier New', monospace;
+    font-size: 10pt;
+    background-color: #f5f5f5;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+pre {
+    background-color: #f8f8f8;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 1em;
+    overflow-x: auto;
+    margin: 1em 0;
+}
+
+pre code {
+    background-color: transparent;
+    padding: 0;
+    font-size: 9pt;
 }
 
 blockquote {
     border-left: 4px solid #3498db;
-    padding-left: 16pt;
-    margin-left: 0;
-    margin-right: 0;
-    color: #555;
+    margin: 1em 0;
+    padding-left: 1em;
+    color: #666;
     font-style: italic;
 }
 
 table {
     border-collapse: collapse;
     width: 100%;
-    margin-bottom: 16pt;
+    margin: 1em 0;
 }
 
-th, td {
+table th,
+table td {
     border: 1px solid #ddd;
-    padding: 8pt 12pt;
+    padding: 8px;
     text-align: left;
 }
 
-th {
+table th {
     background-color: #3498db;
     color: white;
-    font-weight: 600;
+    font-weight: bold;
 }
 
-tr:nth-child(even) {
-    background-color: #f8f9fa;
+table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+ul, ol {
+    margin: 1em 0;
+    padding-left: 2em;
+}
+
+li {
+    margin: 0.4em 0;
 }
 
 strong {
-    font-weight: 600;
+    font-weight: bold;
     color: #2c3e50;
 }
 
 em {
     font-style: italic;
-    color: #555;
 }
 
 a {
@@ -176,210 +165,210 @@ a:hover {
 
 hr {
     border: none;
-    border-top: 2px solid #e0e0e0;
-    margin: 24pt 0;
+    border-top: 1px solid #ddd;
+    margin: 2em 0;
 }
-</style>
 """
 
 
-def find_markdown_files(base_dirs: List[str]) -> List[Path]:
+def convert_markdown_to_html(md_content: str, base_dir: Path) -> str:
     """
-    Recursively find all detailed_breakdown.md and executive_summary.md files
-    in the specified base directories.
+    Convert markdown content to HTML, handling image paths.
     
     Args:
-        base_dirs: List of base directory paths to search
+        md_content: Markdown content as string
+        base_dir: Base directory for resolving relative image paths
         
     Returns:
-        List of Path objects for found markdown files
+        HTML content as string
     """
-    markdown_files = []
-    target_filenames = ['detailed_breakdown.md', 'executive_summary.md']
+    # Convert relative image paths to absolute paths
+    def replace_image_path(match):
+        alt_text = match.group(1)  # Alt text
+        img_path = match.group(2)   # Image path
+        
+        # Handle relative paths
+        if img_path.startswith('./'):
+            img_path = img_path[2:]
+        elif img_path.startswith('/'):
+            # Absolute path, use as is
+            abs_path = Path(img_path)
+            if abs_path.exists():
+                return f'![{alt_text}]({abs_path.as_uri()})'
+            else:
+                return match.group(0)
+        
+        # Convert to absolute path relative to base_dir
+        abs_path = base_dir / img_path
+        if abs_path.exists():
+            return f'![{alt_text}]({abs_path.as_uri()})'
+        else:
+            # Keep original if file doesn't exist
+            return match.group(0)
     
-    for base_dir in base_dirs:
-        base_path = Path(base_dir)
-        if not base_path.exists():
-            logger.warning(f"Directory not found: {base_dir}")
-            continue
-            
-        for filename in target_filenames:
-            # Find all matching files recursively
-            found_files = list(base_path.rglob(filename))
-            markdown_files.extend(found_files)
-            logger.info(f"Found {len(found_files)} {filename} file(s) in {base_dir}")
+    # Replace image paths with absolute file:// URIs
+    pattern = r'!\[([^\]]*)\]\(([^)]+)\)'
+    md_content = re.sub(pattern, replace_image_path, md_content)
     
-    return sorted(markdown_files)
+    # Convert markdown to HTML
+    md = markdown.Markdown(
+        extensions=[
+            'codehilite',
+            'fenced_code',
+            'tables',
+            'nl2br',
+            'sane_lists'
+        ],
+        extension_configs={
+            'codehilite': {
+                'css_class': 'highlight',
+                'use_pygments': True,
+            }
+        }
+    )
+    
+    html_body = md.convert(md_content)
+    
+    # Wrap in full HTML document
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        {PDF_CSS}
+    </style>
+</head>
+<body>
+{html_body}
+</body>
+</html>"""
+    
+    return html
 
 
-def resolve_image_paths(md_content: str, md_file_path: Path) -> str:
+def convert_md_to_pdf(md_path: Path, pdf_path: Path) -> bool:
     """
-    Convert relative image paths in markdown to absolute paths.
+    Convert a markdown file to PDF.
     
     Args:
-        md_content: Markdown file content
-        md_file_path: Path to the markdown file
+        md_path: Path to markdown file
+        pdf_path: Path to output PDF file
         
     Returns:
-        Modified markdown content with absolute image paths
-    """
-    md_dir = md_file_path.parent.absolute()
-    
-    # Pattern to match markdown image syntax: ![alt text](./images/filename.jpg)
-    pattern = r'!\[([^\]]*)\]\((\./images/[^\)]+)\)'
-    
-    def replace_path(match):
-        alt_text = match.group(1)
-        rel_path = match.group(2)
-        
-        # Remove leading './' if present
-        rel_path = rel_path.lstrip('./')
-        
-        # Construct absolute path
-        abs_path = md_dir / rel_path
-        
-        # Check if image exists
-        if not abs_path.exists():
-            logger.warning(f"Image not found: {abs_path}")
-        
-        # Convert to string with forward slashes (works on Windows too)
-        abs_path_str = str(abs_path).replace('\\', '/')
-        
-        return f'![{alt_text}]({abs_path_str})'
-    
-    modified_content = re.sub(pattern, replace_path, md_content)
-    return modified_content
-
-
-def convert_md_to_pdf(md_file: Path) -> bool:
-    """
-    Convert a markdown file to PDF with embedded images and styling.
-    
-    Args:
-        md_file: Path to the markdown file
-        
-    Returns:
-        True if conversion successful, False otherwise
+        True if successful, False otherwise
     """
     try:
-        logger.info(f"Processing: {md_file}")
-        
-        # Read markdown content
-        with open(md_file, 'r', encoding='utf-8') as f:
+        # Read markdown file
+        with open(md_path, 'r', encoding='utf-8') as f:
             md_content = f.read()
         
-        # Resolve image paths to absolute paths
-        md_content = resolve_image_paths(md_content, md_file)
+        # Get base directory for resolving image paths
+        base_dir = md_path.parent.absolute()
         
-        # Add CSS styling to content
-        styled_content = PDF_CSS + '\n\n' + md_content
+        # Convert markdown to HTML
+        html_content = convert_markdown_to_html(md_content, base_dir)
         
-        # Define output PDF path (same directory as markdown file)
-        pdf_file = md_file.with_suffix('.pdf')
+        # Convert HTML to PDF
+        HTML(string=html_content, base_url=str(base_dir)).write_pdf(
+            pdf_path,
+            stylesheets=[CSS(string=PDF_CSS)]
+        )
         
-        # Convert to PDF using pypandoc
-        # Using --pdf-engine=wkhtmltopdf for better HTML/CSS support
-        extra_args = [
-            '--pdf-engine=wkhtmltopdf',
-            '--css=',  # Empty CSS to use inline styles
-            '--standalone',
-            '--self-contained',
-            '-V', 'geometry:margin=2cm',
-        ]
+        return True
         
-        try:
-            pypandoc.convert_text(
-                styled_content,
-                'pdf',
-                format='md',
-                outputfile=str(pdf_file),
-                extra_args=extra_args
-            )
-            logger.info(f"✓ Successfully created: {pdf_file}")
-            return True
-            
-        except RuntimeError as e:
-            # If wkhtmltopdf is not available, try with default engine
-            error_msg = str(e).lower()
-            if 'wkhtmltopdf' in error_msg or 'pdf-engine' in error_msg:
-                logger.warning("wkhtmltopdf not found, trying default PDF engine...")
-                
-                extra_args = [
-                    '--standalone',
-                    '-V', 'geometry:margin=2cm',
-                    '-V', 'colorlinks=true',
-                ]
-                
-                pypandoc.convert_text(
-                    styled_content,
-                    'pdf',
-                    format='md',
-                    outputfile=str(pdf_file),
-                    extra_args=extra_args
-                )
-                logger.info(f"✓ Successfully created: {pdf_file} (using default engine)")
-                return True
-            else:
-                raise
-                
     except Exception as e:
-        logger.error(f"✗ Failed to convert {md_file}: {str(e)}")
+        print(f"ERROR: Failed to convert {md_path}: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
-def main():
-    """Main execution function"""
+def find_markdown_files(output_dir: Path) -> List[Tuple[Path, str]]:
+    """
+    Find all target markdown files in output_zai directory.
     
-    # Print header
+    Args:
+        output_dir: Path to output_zai directory
+        
+    Returns:
+        List of tuples (md_path, file_type)
+    """
+    target_files = [
+        'detailed_breakdown.md',
+        'executive_summary.md',
+        'relevant_code.md'
+    ]
+    
+    found_files = []
+    
+    # Walk through all subdirectories
+    for paper_dir in output_dir.iterdir():
+        if not paper_dir.is_dir():
+            continue
+        
+        # Check for each target file
+        for target_file in target_files:
+            md_path = paper_dir / target_file
+            if md_path.exists():
+                found_files.append((md_path, target_file.replace('.md', '')))
+    
+    return found_files
+
+
+def main():
+    """Main function to convert markdown files to PDF."""
     print("=" * 70)
     print("Markdown to PDF Converter")
     print("=" * 70)
     print()
     
-    # Check pandoc installation
-    try:
-        pandoc_version = pypandoc.get_pandoc_version()
-        logger.info(f"Pandoc version: {pandoc_version}")
-    except Exception as e:
-        logger.error("Pandoc is not installed or not found in PATH.")
-        logger.error("Please install pandoc from: https://pandoc.org/installing.html")
+    # Get output_zai directory
+    script_dir = Path(__file__).parent
+    output_zai_dir = script_dir / 'output_zai'
+    
+    if not output_zai_dir.exists():
+        print(f"ERROR: Directory not found: {output_zai_dir}")
         sys.exit(1)
     
-    # Define directories to scan
-    base_dirs = ['output_mineru', 'output_zai']
+    print(f"INFO: Scanning directory: {output_zai_dir}")
     
     # Find all markdown files
-    logger.info("Scanning directories for markdown files...")
-    markdown_files = find_markdown_files(base_dirs)
+    markdown_files = find_markdown_files(output_zai_dir)
     
     if not markdown_files:
-        logger.warning("No markdown files found!")
+        print("INFO: No markdown files found to convert.")
         return
     
-    print()
-    logger.info(f"Found {len(markdown_files)} markdown file(s) to convert")
+    print(f"INFO: Found {len(markdown_files)} markdown file(s) to convert")
     print()
     
     # Convert each file
-    success_count = 0
-    fail_count = 0
+    successful = 0
+    failed = 0
     
-    for i, md_file in enumerate(markdown_files, 1):
-        print(f"[{i}/{len(markdown_files)}] Converting {md_file.name}...")
-        if convert_md_to_pdf(md_file):
-            success_count += 1
+    for idx, (md_path, file_type) in enumerate(markdown_files, 1):
+        pdf_path = md_path.with_suffix('.pdf')
+        
+        print(f"[{idx}/{len(markdown_files)}] Converting {file_type}.md...")
+        print(f"INFO: Processing: {md_path}")
+        
+        if convert_md_to_pdf(md_path, pdf_path):
+            print(f"INFO: ✓ Successfully created: {pdf_path}")
+            successful += 1
         else:
-            fail_count += 1
+            print(f"INFO: ✗ Failed to convert: {md_path}")
+            failed += 1
+        
         print()
     
     # Print summary
     print("=" * 70)
     print("Conversion Summary")
     print("=" * 70)
-    logger.info(f"✓ Successful: {success_count}")
-    if fail_count > 0:
-        logger.error(f"✗ Failed: {fail_count}")
-    logger.info(f"Total: {len(markdown_files)}")
+    print(f"INFO: ✓ Successful: {successful}")
+    if failed > 0:
+        print(f"INFO: ✗ Failed: {failed}")
+    print(f"INFO: Total: {len(markdown_files)}")
     print("=" * 70)
 
 

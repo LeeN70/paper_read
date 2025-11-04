@@ -4,6 +4,10 @@
 
 Current language model approaches face fundamental limitations by treating reasoning and acting as separate capabilities. Chain-of-thought (CoT) reasoning methods operate as static black boxes, using only internal representations without grounding in external reality. This leads to persistent issues with fact hallucination and error propagation throughout the reasoning process. Studies showed that CoT had a **56% hallucination rate** in failure cases on HotpotQA, compared to **0%** for ReAct. Conversely, action-only approaches like WebGPT lack high-level strategic planning and abstract reasoning capabilities, making them ineffective for complex multi-step tasks that require goal decomposition and exception handling. This separation creates a critical bottleneck for developing truly capable AI agents that can operate effectively in real-world scenarios requiring both knowledge retrieval and strategic decision-making.
 
+![Comparison of prompting methods](./images/7ffea04fde729d63b580c8b63747bd25.jpg)
+
+*Figure 1: Comparison of 4 prompting methods - (a) Standard, (b) Chain-of-thought (CoT, Reason Only), (c) Act-only, and (d) ReAct (Reason+Act), solving a HotpotQA question. ReAct shows how reasoning traces help guide actions and handle exceptions.*
+
 ## The Innovation
 
 ReAct introduces a fundamental paradigm shift by augmenting the action space of language models to include both domain-specific actions and free-form language thoughts. The core insight is that reasoning traces and actions can synergize in an interleaved manner, creating a dynamic feedback loop where thoughts guide actions and actions provide new information for reasoning.
@@ -49,6 +53,10 @@ ReAct demonstrates superior performance across multiple benchmarks with remarkab
 **Fine-tuning Results:**
 - **Scalability**: PaLM-62B fine-tuned ReAct outperformed all 540B prompting methods on HotpotQA
 - **Data Efficiency**: With only 3,000 training examples, fine-tuned ReAct became the best method among all approaches
+
+![Scaling results for prompting and fine-tuning](./images/2ae384b9b60a913387de123ec05332f5.jpg)
+
+*Figure 2: Scaling results for prompting and fine-tuning on HotPotQA with ReAct and baseline methods. Fine-tuned ReAct (8B) outperforms all 62B prompting methods, while fine-tuned ReAct (62B) outperforms all 540B prompting methods.*
 
 The evaluation setup included four diverse benchmarks: HotpotQA (multi-hop question answering), Fever (fact verification), ALFWorld (text-based household tasks), and WebShop (online shopping environment), demonstrating ReAct's broad applicability across different domains and task types.
 
